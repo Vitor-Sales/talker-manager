@@ -1,4 +1,5 @@
 const fs = require('fs/promises');
+const crypto = require('crypto');
 const express = require('express');
 const { join } = require('path');
 
@@ -39,4 +40,15 @@ app.get('/talker/:id', async (req, res) => {
   if (!findTalker) return res.status(404).json({ message: 'Pessoa palestrante não encontrada' });
 
   res.status(200).json(findTalker);
+});
+
+app.post('/login', async (req, res) => {
+  // const { email, password } = req.params;
+  // const entryValues = [email, password];
+
+  // if (entryValues.includes(undefined)) return;
+
+  const token = crypto.randomBytes(8).toString('hex');
+
+  res.status(200).json({ token });
 });
