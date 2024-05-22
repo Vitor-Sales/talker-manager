@@ -18,7 +18,8 @@ const readTalkerFile = async () => {
 
 
 const writeTalkerFile = async (path, newContent) => {
-    await fs.writeFile(path, JSON.stringify(newContent));
+    const string = JSON.stringify(newContent, null, 2);
+    await fs.writeFile(path, string);
 };
 
 module.exports = { readTalkerFile, writeTalkerFile }

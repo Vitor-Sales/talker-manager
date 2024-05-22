@@ -46,16 +46,18 @@ app.get('/talker', async (req, res) => {
 
 app.post('/talker', auth, validateName, validateAge, validateTalk, async (req, res) => {
   const talkers = await readTalkerFile();
+  console.log(talkers);
 
   const talkerContent = req.body;
   const nextId = findNextId(talkers);
+  console.log(`nextId: ${nextId}`);
   const newTalker = { id: nextId, ...talkerContent };
-  const newContent = { ...talkers, newTalker };
+  const newContent = [...talkers, newTalker];
   console.log(newTalker);
 
   await writeTalkerFile(PATH, newContent);
 
-  res.status(201).json(newTalker.id);
+  res.status(201).json(newTalker);
 });
 
 app.get('/talker/:id', async (req, res) => {
@@ -69,18 +71,28 @@ app.get('/talker/:id', async (req, res) => {
   res.status(200).json(findTalker);
 });
 
+// PUT
+
 app.put('/talker/:id', auth, validateName, validateAge, validateTalk, async (req, res) => {
   const { id } = req.params;
-  const { name, age, talk } = req.body;
+  const content = req.body;
 
-  await updateTalkers(id, { name, age, talk });
+  await updateTalkers(id, content);
 
-  res.status(200).json({ MESSAGE: 'created' });
-  // res.status(200).json({ id, name, age, talk });
+  // res.status(200).json({ MESSAGE: 'created' });
+  res.status(200).json(content);
 });
 
-app.delete('/talker/:id', auth, (_req, res) => {
-  res.status(204);
+// DELETE
+
+app.delete('/talker/:id', auth, async (req, res) => {
+  const { id } = req.params;
+  const content = await readTalkerFile();
+  const newContent = content.filter((talker) => talker.id !== Number(id));
+
+  await writeTalkerFile(PATH, newContent);
+
+  res.status(204).json();
 });
 
 app.post('/login', validateLogin, (_req, res) => {
