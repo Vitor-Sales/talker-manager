@@ -2,7 +2,6 @@
 const crypto = require('crypto');
 const express = require('express');
 const { join } = require('path');
-const { log } = require('console');
 const {
   validateLogin,
   validateName,
