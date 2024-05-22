@@ -1,7 +1,18 @@
-const fs = require('fs/promises');
+// const fs = require('fs/promises');
 const crypto = require('crypto');
 const express = require('express');
 const { join } = require('path');
+const { log } = require('console');
+const {
+  validateLogin,
+  validateName,
+  validateAge,
+  validateTalk,
+  updateTalkers,
+} = require('./utils/talker');
+const { readTalkerFile, writeTalkerFile } = require('./utils/fsUtils');
+const { findNextId } = require('./utils/findNextId');
+const auth = require('./utils/auth');
 
 const app = express();
 app.use(express.json());
@@ -20,20 +31,36 @@ app.listen(PORT, () => {
 
 // Meu código a partir daqui
 
-const PATH = join(__dirname, '/talker.json');
+const PATH = join(__dirname, './talker.json');
 
 app.get('/talker', async (req, res) => {
   try {
-    const content = await fs.readFile(PATH);
-    res.status(200).json(JSON.parse(content));
+    const content = await readTalkerFile();
+    res.status(200).json(content);
   } catch (e) {
     res.status(200).json([]);
   }
 });
 
+// POST
+
+app.post('/talker', auth, validateName, validateAge, validateTalk, async (req, res) => {
+  const talkers = await readTalkerFile();
+
+  const talkerContent = req.body;
+  const nextId = findNextId(talkers);
+  const newTalker = { id: nextId, ...talkerContent };
+  const newContent = { ...talkers, newTalker };
+  console.log(newTalker);
+
+  await writeTalkerFile(PATH, newContent);
+
+  res.status(201).json(newTalker.id);
+});
+
 app.get('/talker/:id', async (req, res) => {
   const { id } = req.params;
-  const content = await fs.readFile(PATH);
+  const content = await readTalkerFile();
   const talkers = JSON.parse(content);
   const findTalker = talkers.find((talker) => talker.id === Number(id));
 
@@ -42,31 +69,21 @@ app.get('/talker/:id', async (req, res) => {
   res.status(200).json(findTalker);
 });
 
-const validateFields = async (req, res, next) => {
-  const { email, password } = await req.body;
-  // const regexEmail = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-  const regexEmail = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+app.put('/talker/:id', auth, validateName, validateAge, validateTalk, async (req, res) => {
+  const { id } = req.params;
+  const { name, age, talk } = req.body;
 
-  if (!email) return res.status(400).json({ message: 'O campo "email" é obrigatório' });
+  await updateTalkers(id, { name, age, talk });
 
-  if (!regexEmail.test(email)) {
-    return res.status(400).json({ message: 'O "email" deve ter o formato "email@email.com"' });
-  }
+  res.status(200).json({ MESSAGE: 'created' });
+  // res.status(200).json({ id, name, age, talk });
+});
 
-  if (!password) return res.status(400).json({ message: 'O campo "password" é obrigatório' });
-  if (password.length < 6) {
-    return res.status(400).json({ message: 'O "password" deve ter pelo menos 6 caracteres' });
-  }
+app.delete('/talker/:id', auth, (_req, res) => {
+  res.status(204);
+});
 
-  next();
-};
-
-app.post('/login', validateFields, (_req, res) => {
-  // const { email, password } = req.params;
-  // const entryValues = [email, password];
-
-  // if (entryValues.includes(undefined)) return;
-
+app.post('/login', validateLogin, (_req, res) => {
   const token = crypto.randomBytes(8).toString('hex');
 
   res.status(200).json({ token });
