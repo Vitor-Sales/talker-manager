@@ -35,6 +35,18 @@ app.listen(PORT, () => {
 
 const PATH = join(__dirname, './talker.json');
 
+app.get('/talker/search', auth, async (req, res) => {
+  const { q } = req.query;
+  const content = await readTalkerFile();
+
+  if (!q) return res.status(200).json(content);
+
+  const filteredContent = content
+    .filter((cont) => cont.name.toLowerCase().includes(q.toLowerCase()));
+
+  res.status(200).json(filteredContent);
+});
+
 app.get('/talker', async (_req, res) => {
   try {
     const content = await readTalkerFile();

@@ -110,6 +110,25 @@ const updateTalkers = async (id, update) => {
   }
 };
 
+// const searchQuery = (q, data) => {
+//   try {
+//     if (q === '') return data;
+//     if (!q) return [];
+//     const name = q.toLowerCase();
+//     const find = data.filter((talker) => talker.name.toLowerCase().includes(name));
+//     return find;
+//   } catch (error) {
+//     console.error(error.message);
+//   }
+// };
+
+// const searchTalkers = async (query) => {
+//   let talkers = await readTalkerFile();
+//   if ('q' in query) talkers = searchQuery(query.q, talkers);
+
+//   return talkers;
+// };
+
 module.exports = {
   validateLogin,
   validateName,
