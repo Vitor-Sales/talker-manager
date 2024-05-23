@@ -7,7 +7,10 @@ const {
   validateName,
   validateAge,
   validateTalk,
+  validateRate,
+  validateRateNumber,
   updateTalkers,
+  validateTalker,
 } = require('./utils/talker');
 const { readTalkerFile, writeTalkerFile } = require('./utils/fsUtils');
 const { findNextId } = require('./utils/findNextId');
@@ -32,7 +35,7 @@ app.listen(PORT, () => {
 
 const PATH = join(__dirname, './talker.json');
 
-app.get('/talker', async (req, res) => {
+app.get('/talker', async (_req, res) => {
   try {
     const content = await readTalkerFile();
     res.status(200).json(content);
@@ -43,21 +46,27 @@ app.get('/talker', async (req, res) => {
 
 // POST
 
-app.post('/talker', auth, validateName, validateAge, validateTalk, async (req, res) => {
-  const talkers = await readTalkerFile();
-  console.log(talkers);
+app.post('/talker', auth,
+  validateName,
+  validateAge,
+  validateTalk,
+  validateRate,
+  validateRateNumber,
+  async (req, res) => {
+    const talkers = await readTalkerFile();
+    console.log(talkers);
 
-  const talkerContent = req.body;
-  const nextId = findNextId(talkers);
-  console.log(`nextId: ${nextId}`);
-  const newTalker = { id: nextId, ...talkerContent };
-  const newContent = [...talkers, newTalker];
-  console.log(newTalker);
+    const talkerContent = req.body;
+    const nextId = findNextId(talkers);
+    console.log(`nextId: ${nextId}`);
+    const newTalker = { id: nextId, ...talkerContent };
+    const newContent = [...talkers, newTalker];
+    console.log(newTalker);
 
-  await writeTalkerFile(PATH, newContent);
+    await writeTalkerFile(newContent);
 
-  res.status(201).json(newTalker);
-});
+    res.status(201).json(newTalker);
+  });
 
 app.get('/talker/:id', async (req, res) => {
   const { id } = req.params;
@@ -72,15 +81,22 @@ app.get('/talker/:id', async (req, res) => {
 
 // PUT
 
-app.put('/talker/:id', auth, validateName, validateAge, validateTalk, async (req, res) => {
-  const { id } = req.params;
-  const content = req.body;
+app.put('/talker/:id',
+  auth, validateName, validateAge, validateTalk, validateTalker, validateRate, validateRateNumber,
+  async (req, res) => {
+    const { id } = req.params;
+    const content = req.body;
 
-  await updateTalkers(id, content);
+    // const talkerIndex = content.findIndex((talker) => talker.id === +id);
+    // if (talkerIndex === -1) {
+    //   return res.status(404).json({ message: 'Pessoa palestrante não encontrada' });
+    // }
 
-  // res.status(200).json({ MESSAGE: 'created' });
-  res.status(200).json(content);
-});
+    const talkers = await updateTalkers(id, content);
+    await writeTalkerFile(talkers);
+
+    res.status(200).json({ id: +id, ...content });
+  });
 
 // DELETE
 
