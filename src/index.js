@@ -54,14 +54,11 @@ app.post('/talker', auth,
   validateRateNumber,
   async (req, res) => {
     const talkers = await readTalkerFile();
-    console.log(talkers);
 
     const talkerContent = req.body;
     const nextId = findNextId(talkers);
-    console.log(`nextId: ${nextId}`);
     const newTalker = { id: nextId, ...talkerContent };
     const newContent = [...talkers, newTalker];
-    console.log(newTalker);
 
     await writeTalkerFile(newContent);
 
@@ -70,8 +67,9 @@ app.post('/talker', auth,
 
 app.get('/talker/:id', async (req, res) => {
   const { id } = req.params;
-  const content = await readTalkerFile();
-  const talkers = JSON.parse(content);
+  const talkers = await readTalkerFile();
+
+  console.log(talkers);
   const findTalker = talkers.find((talker) => talker.id === Number(id));
 
   if (!findTalker) return res.status(404).json({ message: 'Pessoa palestrante não encontrada' });
